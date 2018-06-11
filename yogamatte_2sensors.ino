@@ -1,27 +1,41 @@
-// the six digital pins for s pins
-// code for 2 Multiplexers to handle 2 pressure sensors
+//1 multiplexer handles switch between 2 pressure sensors (velostat)
+//2 multiplexers handle "matrix" of 30 LEDs
 
 /**********************************************/
+//bits for multiplexer 1
 int r0 = 0;      
 int r1 = 0;       
 int r2 = 0;
+//bits for multiplexer 2
+int r3 = 0;      
+int r4 = 0;       
+int r5 = 0;
+//bits for multiplexer 3
+int r6 = 0;      
+int r7 = 0;       
+int r8 = 0;
 
 /**********************************************/
+//count repetitions
+int repetitions = 0;
+
+//initial settings vor pressure sensors
+int mode = 0; //timer for sensor change
 int sensorValue = 0;
 float voltage = 0;
-int counter = 0;
 bool bool_sensor1 = false;
 bool bool_sensor2 = false;
 
+//maps the order of the LEDs being turned on to their position in the "matrix"
 int mapping[8][8] = { \
-    {27, 25, 13, 11, 21, 24, 0, 0},  \
-    {22, 7, 2, 6, 18, 15, 0, 0}, \
-    {16, 5, 00, 3, 9, 20, 0, 0}, \
-    {26, 10, 1, 4, 12, 0, 0, 0}, \
-    {19, 14, 8, 17, 0, 0, 0, 0}, \
-    {23, 0, 0, 0, 0, 0, 0, 0}, \
-    {0, 0, 0, 0, 0, 0, 29, 0}, \
-    {0, 0, 0, 0, 0, 0, 0, 30} \
+    {27, 25, 13, 11, 21, 24,  0,  0},  \
+    {22,  7,  2,  6, 18, 15,  0,  0}, \
+    {16,  5,  0,  3,  9, 20,  0,  0}, \
+    {26, 10,  1,  4, 12,  0,  0,  0}, \
+    {19, 14,  8, 17,  0,  0,  0,  0}, \
+    {23,  0,  0,  0,  0,  0,  0,  0}, \
+    { 0,  0,  0,  0,  0,  0, 29,  0}, \
+    { 0,  0,  0,  0,  0,  0,  0, 30} \
 };
 
 //values read from the mapping matrix for new counter
@@ -39,8 +53,8 @@ int state[8][8] = { \
     {0, 0, 0, 0, 0, 0, 0, 0} \
 };
 
-//states for the Sensor 
-int  bin [] = {0b000, 0b001}; //list of binary values
+//input states for the multiplexor address select pins 
+int  bin [] = {0b000, 0b001, 0b010, 0b011, 0b100, 0b101, 0b110, 0b111}; //list of binary values
 /**********************************************/
 
 void setup() {
@@ -62,7 +76,7 @@ void setup() {
 
 /**********************************************/
 void loop() {
-  //Serial.println(mapping[2][3]);
+  
   for (int mode=0; mode < 2; mode++) { //switches between left and right sensor
     
    int state = bin[mode]; //gets settings for s pins 
@@ -104,10 +118,6 @@ void loop() {
     //Serial.print("A1");
   }
   
-  /*Serial.print(": ");
-  Serial.print(voltage);
-  Serial.print(" - ");
-  Serial.println(counter); */
   delay(2000);
   countUp();
     
@@ -115,9 +125,9 @@ void loop() {
 }
 
 void countUp() {
-  ++counter;
-  Serial.print("counter: ");
-  Serial.println(counter);
+  ++repetitions;
+  Serial.print("repetitions: ");
+  Serial.println(repetitions);
   getNewMapping();
   
   state[newRow][newCol]=1;
@@ -132,7 +142,7 @@ void countUp() {
 void getNewMapping(){
   for(unsigned row = 0; row < 8; ++row) {
    for(unsigned col = 0; col < 8; ++col) {
-      if(mapping[row][col] == counter) {
+      if(mapping[row][col] == repetitions) {
          newRow = row;
          newCol = col;
          return;
