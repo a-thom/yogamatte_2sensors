@@ -23,6 +23,8 @@ int repetitions = 0;
 int mode = 0; //timer for sensor change
 int sensorValue = 0;
 float voltage = 0;
+int side = 0; // 0 for right, 1 for left
+
 bool bool_sensor1 = false;
 bool bool_sensor2 = false;
 
@@ -45,7 +47,7 @@ int newCol;
 int state[8][8] = { \
     {0, 0, 0, 0, 0, 0, 0, 0},  \
     {0, 0, 0, 0, 0, 0, 0, 0}, \
-    {0, 0, 1, 0, 0, 0, 0, 0}, \
+    {0, 0, 0, 0, 0, 0, 0, 0}, \
     {0, 0, 0, 0, 0, 0, 0, 0}, \
     {0, 0, 0, 0, 0, 0, 0, 0}, \
     {0, 0, 0, 0, 0, 0, 0, 0}, \
@@ -76,41 +78,62 @@ void setup() {
 
 /**********************************************/
 void loop() {
-  
-  for (int mode=0; mode < 2; mode++) { //switches between left and right sensor
-    
-   int state = bin[mode]; //gets settings for s pins 
-    
-   r0 = bitRead(state,0); 
-   r1 = bitRead(state,1); 
-   r2 = bitRead(state,2); //same settings on both multiplexers
- 
-   digitalWrite(2, r0); // send the bits to the digital pins 
-   digitalWrite(3, r1);
-   digitalWrite(4, r2);
-       
-   // read analog pin:
-   sensorValue = analogRead(A0);
-   // convert analog value to voltage:
-   voltage = sensorValue * (5.0 / 1023.0);
+  // change sensor every second
+  int timer = round(millis()/1000);
+  if(timer % 2 == 0){
+    mode = 0;
+    Serial.println("left");
+    //measure first sensor
+  } else {
+    mode = 1;
+    Serial.println("right");
+    //measure second sensor
+  }
 
+  // get settings for sensor select pins 
+  int state = bin[mode]; 
+  r0 = bitRead(state,0); 
+  r1 = bitRead(state,1); 
+  r2 = bitRead(state,2);
+  
+  // send the bits to the digital pins
+  digitalWrite(2, r0);  
+  digitalWrite(3, r1);
+  digitalWrite(4, r2);
+       
+  // read analog pin and convert value to voltage
+  sensorValue = analogRead(A0);
+  voltage = sensorValue * (5.0 / 1023.0);
   if(voltage == 5.00){
     if(mode == 0){
       if(bool_sensor1 == false){
         bool_sensor1 = true;
-        countUp();
-      } else {
-        bool_sensor1 = false;
       }
     } else {
+      //mode == 1
       if(bool_sensor1 == false){
         bool_sensor1 = true;
-        countUp();
-      } else {
-        bool_sensor1 = false;
       }  
     }  
-  }  
+  } else { //voltage < 5
+    if(bool_sensor1 && bool_sensor2){ //coming out of firm stand
+      countUp();
+      if(mode == 0){
+        bool_sensor1 = false;
+        side = 0; //right foot moved first
+      } else {
+        bool_sensor2 = false;
+        side = 1; // left foot moved first
+      }
+    } else { 
+      // some other reason for no pressure on sensore
+      if(mode == 0){
+        bool_sensor1 = false;
+      } else {
+        bool_sensor2 = false;
+      }
+    }
+  }
   // print voltage and counter:
   if(mode == 0){
     //Serial.print("A0");
@@ -118,11 +141,10 @@ void loop() {
     //Serial.print("A1");
   }
   
-  delay(2000);
-  countUp();
+  delay(1000);
     
  }
-}
+
 
 void countUp() {
   ++repetitions;
@@ -131,12 +153,13 @@ void countUp() {
   getNewMapping();
   
   state[newRow][newCol]=1;
-  for(int i=0; i<8; i++){
+  //print current matrix
+  /*for(int i=0; i<8; i++){
     for(int j=0; j<8; j++){
       Serial.print(state[i][j]);
     }
     Serial.println();
-  }
+  }*/
 }
 
 void getNewMapping(){
