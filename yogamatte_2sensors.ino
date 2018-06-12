@@ -34,18 +34,14 @@ int mapping[8][8] = { \
     {22,  7,  2,  6, 18, 15,  0,  0}, \
     {16,  5,  0,  3,  9, 20,  0,  0}, \
     {26, 10,  1,  4, 12,  0,  0,  0}, \
-    {19, 14,  8, 17,  0,  0,  0,  0}, \
-    {23,  0,  0,  0,  0,  0,  0,  0}, \
-    { 0,  0,  0,  0,  0,  0, 29,  0}, \
-    { 0,  0,  0,  0,  0,  0,  0, 30} \
+    {19, 14,  8, 17,  29, 0,  0,  0}, \
+    {23,  0,  0,  0,  0, 30,  0,  0}, \
+    { 0,  0,  0,  0,  0,  0,  0,  0}, \
+    { 0,  0,  0,  0,  0,  0,  0,  0} \
 };
 
-//values read from the mapping matrix for new counter
-int newRow;
-int newCol;
-
 int state[8][8] = { \
-    {0, 0, 0, 0, 0, 0, 0, 0},  \
+    {1, 0, 0, 0, 0, 0, 0, 0},  \
     {0, 0, 0, 0, 0, 0, 0, 0}, \
     {0, 0, 0, 0, 0, 0, 0, 0}, \
     {0, 0, 0, 0, 0, 0, 0, 0}, \
@@ -64,14 +60,14 @@ void setup() {
   pinMode(2, OUTPUT);    // r0
   pinMode(3, OUTPUT);    // r1
   pinMode(4, OUTPUT);    // r2
-  //pins for the LED 5V multiplexer
+  //pins for the LED ground multiplexer
   pinMode(5, OUTPUT);    // r0
   pinMode(6, OUTPUT);    // r1
   pinMode(7, OUTPUT);    // r2
-  //pins for the LED ground multiplexer
+  //pins for the LED 5V multiplexer
   pinMode(8, OUTPUT);    // r0
   pinMode(9, OUTPUT);    // r1
-  pinMode(10, OUTPUT);    // r2
+  pinMode(10, OUTPUT);   // r2
   
   Serial.begin(9600);
 }
@@ -91,14 +87,14 @@ void loop() {
   }
 
   // get settings for sensor select pins 
-  int state = bin[mode]; 
-  r0 = bitRead(state,0); 
-  r1 = bitRead(state,1); 
-  r2 = bitRead(state,2);
+  int set = bin[mode]; 
+  //r0 = bitRead(set,0); 
+ // r1 = bitRead(set,1); 
+  r2 = bitRead(set,2);
   
   // send the bits to the digital pins
-  digitalWrite(2, r0);  
-  digitalWrite(3, r1);
+  //digitalWrite(2, r0);  
+ // digitalWrite(3, r1);
   digitalWrite(4, r2);
        
   // read analog pin and convert value to voltage
@@ -126,7 +122,7 @@ void loop() {
         side = 1; // left foot moved first
       }
     } else { 
-      // some other reason for no pressure on sensore
+      // some other reason for no pressure on sensor
       if(mode == 0){
         bool_sensor1 = false;
       } else {
@@ -134,15 +130,34 @@ void loop() {
       }
     }
   }
-  // print voltage and counter:
-  if(mode == 0){
-    //Serial.print("A0");
-  } else {
-    //Serial.print("A1");
+
+  //control LEDs
+  for(int i = 0; i<6; i++){
+    for(int j = 0; j<6; j++){
+      delay(1000);
+      if(state[i][j] == 1){ // LED is supposed to glow
+        // get pin settings for sensor select pins 
+        int set5V = bin[i]; 
+        int setGround = bin[j];
+        //write to bits
+        r3 = bitRead(setGround,0); 
+        r4 = bitRead(setGround,1); 
+        r5 = bitRead(setGround,2);
+        r6 = bitRead(set5V,0); 
+        r7 = bitRead(set5V,1); 
+        r8 = bitRead(set5V,2);
+        // send the bits to the digital pins
+        digitalWrite(5, r3);  
+        digitalWrite(6, r4);
+        digitalWrite(7, r5);
+        digitalWrite(8, r6);  
+        digitalWrite(9, r7);
+        digitalWrite(10, r8);
+      }
+    }
   }
   
-  delay(1000);
-    
+  delay(1000); //can be activated to slow down code while working on it
  }
 
 
@@ -150,19 +165,9 @@ void countUp() {
   ++repetitions;
   Serial.print("repetitions: ");
   Serial.println(repetitions);
-  getNewMapping();
-  
-  state[newRow][newCol]=1;
-  //print current matrix
-  /*for(int i=0; i<8; i++){
-    for(int j=0; j<8; j++){
-      Serial.print(state[i][j]);
-    }
-    Serial.println();
-  }*/
-}
-
-void getNewMapping(){
+  //get mapping
+  int newCol;
+  int newRow;
   for(unsigned row = 0; row < 8; ++row) {
    for(unsigned col = 0; col < 8; ++col) {
       if(mapping[row][col] == repetitions) {
@@ -170,7 +175,15 @@ void getNewMapping(){
          newCol = col;
          return;
       }
-   }
-}
+    }
+  }
+  state[newRow][newCol] = 1;
+  //print state matrix
+  /*for(int i=0; i<8; i++){
+    for(int j=0; j<8; j++){
+      Serial.print(state[i][j]);
+    }
+    Serial.println();
+  }*/
 }
 
