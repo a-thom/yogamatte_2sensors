@@ -1,3 +1,5 @@
+#include <TimerOne.h>
+
 //1 multiplexer handles switch between 2 pressure sensors (velostat)
 //2 multiplexers handle "matrix" of 30 LEDs
 
@@ -74,63 +76,7 @@ void setup() {
 
 /**********************************************/
 void loop() {
-  // change sensor every second
-  int timer = round(millis()/1000);
-  if(timer % 2 == 0){
-    mode = 0;
-    Serial.println("left");
-    //measure first sensor
-  } else {
-    mode = 1;
-    Serial.println("right");
-    //measure second sensor
-  }
-
-  // get settings for sensor select pins 
-  int set = bin[mode]; 
-  //r0 = bitRead(set,0); 
- // r1 = bitRead(set,1); 
-  r2 = bitRead(set,2);
   
-  // send the bits to the digital pins
-  //digitalWrite(2, r0);  
- // digitalWrite(3, r1);
-  digitalWrite(4, r2);
-       
-  // read analog pin and convert value to voltage
-  sensorValue = analogRead(A0);
-  voltage = sensorValue * (5.0 / 1023.0);
-  if(voltage == 5.00){
-    if(mode == 0){
-      if(bool_sensor1 == false){
-        bool_sensor1 = true;
-      }
-    } else {
-      //mode == 1
-      if(bool_sensor1 == false){
-        bool_sensor1 = true;
-      }  
-    }  
-  } else { //voltage < 5
-    if(bool_sensor1 && bool_sensor2){ //coming out of firm stand
-      countUp();
-      if(mode == 0){
-        bool_sensor1 = false;
-        side = 0; //right foot moved first
-      } else {
-        bool_sensor2 = false;
-        side = 1; // left foot moved first
-      }
-    } else { 
-      // some other reason for no pressure on sensor
-      if(mode == 0){
-        bool_sensor1 = false;
-      } else {
-        bool_sensor2 = false;
-      }
-    }
-  }
-
   //control LEDs
   for(int i = 0; i<6; i++){
     for(int j = 0; j<5; j++){

@@ -1,3 +1,5 @@
+#include <TimerOne.h>
+
 //1 multiplexer handles switch between 2 pressure sensors (velostat)
 //2 multiplexers handle "matrix" of 30 LEDs
 
@@ -56,6 +58,11 @@ int  bin [] = {0b000, 0b001, 0b010, 0b011, 0b100, 0b101, 0b110, 0b111}; //list o
 /**********************************************/
 
 void setup() {
+  // set a timer in microseconds
+  Timer1.initialize(1000000); 
+  // attach the service routine
+  Timer1.attachInterrupt( timerIsr ); 
+  
   //pins for the sensor multiplexer
   pinMode(2, OUTPUT);    // r0
   pinMode(3, OUTPUT);    // r1
@@ -74,94 +81,9 @@ void setup() {
 
 /**********************************************/
 void loop() {
-  // change sensor every second
-  int timer = round(millis()/1000);
-  if(timer % 2 == 0){
-    mode = 0;
-    Serial.println("left");
-    //measure first sensor
-  } else {
-    mode = 1;
-    Serial.println("right");
-    //measure second sensor
-  }
-
-  // get settings for sensor select pins 
-  int set = bin[mode]; 
-  //r0 = bitRead(set,0); 
- // r1 = bitRead(set,1); 
-  r2 = bitRead(set,2);
   
-  // send the bits to the digital pins
-  //digitalWrite(2, r0);  
- // digitalWrite(3, r1);
-  digitalWrite(4, r2);
-       
-  // read analog pin and convert value to voltage
-  sensorValue = analogRead(A0);
-  voltage = sensorValue * (5.0 / 1023.0);
-  if(voltage == 5.00){
-    if(mode == 0){
-      if(bool_sensor1 == false){
-        bool_sensor1 = true;
-      }
-    } else {
-      //mode == 1
-      if(bool_sensor1 == false){
-        bool_sensor1 = true;
-      }  
-    }  
-  } else { //voltage < 5
-    if(bool_sensor1 && bool_sensor2){ //coming out of firm stand
-      countUp();
-      if(mode == 0){
-        bool_sensor1 = false;
-        side = 0; //right foot moved first
-      } else {
-        bool_sensor2 = false;
-        side = 1; // left foot moved first
-      }
-    } else { 
-      // some other reason for no pressure on sensor
-      if(mode == 0){
-        bool_sensor1 = false;
-      } else {
-        bool_sensor2 = false;
-      }
-    }
-  }
-
-  //control LEDs
-  for(int i = 0; i<6; i++){
-    for(int j = 0; j<5; j++){
-      //delay(1000);
-      if(state[i][j] >= 0){ // LED is supposed to glow
-        // get pin settings for sensor select pins 
-        int set5V = bin[i]; 
-        int setGround = bin[j];
-        //write to bits
-        r3 = bitRead(setGround,0); 
-        r4 = bitRead(setGround,1); 
-        r5 = bitRead(setGround,2);
-        r6 = bitRead(set5V,0); 
-        r7 = bitRead(set5V,1); 
-        r8 = bitRead(set5V,2);
-        // send the bits to the digital pins
-        digitalWrite(5, r3);  
-        digitalWrite(6, r4);
-        digitalWrite(7, r5);
-        digitalWrite(8, r6);  
-        digitalWrite(9, r7);
-        digitalWrite(10, r8);
-        //delay(1000);
-      }
-    }
-  }
+}
   
-  //delay(1000); //can be activated to slow down code while working on it
- }
-
-
 void countUp() {
   ++repetitions;
   Serial.print("repetitions: ");
@@ -188,3 +110,31 @@ void countUp() {
   }*/
 }
 
+void timerIsr() {
+  //control LEDs
+  for(int i = 0; i<6; i++){
+    for(int j = 0; j<5; j++){
+      //delay(1000);
+      if(state[i][j] >= 0){ // LED is supposed to glow
+        // get pin settings for sensor select pins 
+        int set5V = bin[i]; 
+        int setGround = bin[j];
+        //write to bits
+        r3 = bitRead(setGround,0); 
+        r4 = bitRead(setGround,1); 
+        r5 = bitRead(setGround,2);
+        r6 = bitRead(set5V,0); 
+        r7 = bitRead(set5V,1); 
+        r8 = bitRead(set5V,2);
+        // send the bits to the digital pins
+        digitalWrite(5, r3);  
+        digitalWrite(6, r4);
+        digitalWrite(7, r5);
+        digitalWrite(8, r6);  
+        digitalWrite(9, r7);
+        digitalWrite(10, r8);
+        //delay(1000);
+      }
+    }
+  }
+}
