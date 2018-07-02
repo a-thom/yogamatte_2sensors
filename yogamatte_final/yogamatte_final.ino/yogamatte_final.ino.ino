@@ -20,6 +20,7 @@ int r8 = 0;
 /**********************************************/
 //count repetitions
 int repetitions = 0;
+int target = 0;
 
 //initial settings vor pressure sensors
 int mode = 0; //timer for sensor change
@@ -31,35 +32,29 @@ bool bool_sensor1 = false;
 bool bool_sensor2 = false;
 
 //maps the order of the LEDs being turned on to their position in the "matrix"
-int mapping[8][8] = { \
-    {27, 25, 13, 11, 21, 24,  0,  0},  \
-    {22,  7,  2,  6, 18, 15,  0,  0}, \
-    {16,  5,  0,  3,  9, 20,  0,  0}, \
-    {26, 10,  1,  4, 12,  0,  0,  0}, \
-    {19, 14,  8, 17,  29, 0,  0,  0}, \
-    {23,  0,  0,  0,  0, 30,  0,  0}, \
-    { 0,  0,  0,  0,  0,  0,  0,  0}, \
-    { 0,  0,  0,  0,  0,  0,  0,  0} \
+int mapping[5][6] = { \
+    { 0, 24, 25, 13, 22, 27}, \
+    {21, 10,  2,  7, 19, 16}, \
+    {17,  5,  1,  4,  9, 23}, \
+    {25, 12,  3,  6, 11, 29}, \
+    {20, 14,  8, 18, 26, 28}  \
 };
 
-int state[8][8] = { \
-    {1, 0, 0, 0, 0, 0, 0, 0},  \
-    {0, 0, 0, 0, 0, 0, 0, 0}, \
-    {0, 0, 0, 0, 0, 0, 0, 0}, \
-    {0, 0, 0, 0, 0, 0, 0, 0}, \
-    {0, 0, 0, 0, 0, 0, 0, 0}, \
-    {0, 0, 0, 0, 0, 0, 0, 0}, \
-    {0, 0, 0, 0, 0, 0, 0, 0}, \
-    {0, 0, 0, 0, 0, 0, 0, 0} \
+int state[5][6] = { \
+    {0, 0, 0, 0, 0, 0},  \
+    {0, 0, 0, 0, 0, 0}, \
+    {0, 0, 0, 0, 0, 0}, \
+    {0, 0, 0, 0, 0, 0}, \
+    {0, 0, 0, 0, 0, 0} \
 };
 
 //input states for the multiplexor address select pins 
-int  bin [] = {0b000, 0b001, 0b010, 0b011, 0b100, 0b101, 0b110, 0b111}; //list of binary values
+int  bin [] = {0b000, 0b001, 0b010, 0b011, 0b100, 0b101}; //list of binary values
 /**********************************************/
 
 void setup() {
   // set a timer in microseconds
-  Timer1.initialize(1000000); 
+  Timer1.initialize(1); 
   // attach the service routine
   Timer1.attachInterrupt( timerIsr ); 
   
@@ -75,50 +70,47 @@ void setup() {
   pinMode(8, OUTPUT);    // r0
   pinMode(9, OUTPUT);    // r1
   pinMode(10, OUTPUT);   // r2
+
+  //pins for the rotary switch
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  pinMode(A3, INPUT);
+  pinMode(A4, INPUT);
+  pinMode(A5, INPUT);
   
   Serial.begin(9600);
 }
 
 /**********************************************/
 void loop() {
-  
-}
-  
-void countUp() {
-  ++repetitions;
-  Serial.print("repetitions: ");
-  Serial.println(repetitions);
-  //get mapping
-  int newCol;
-  int newRow;
-  for(unsigned row = 0; row < 8; ++row) {
-   for(unsigned col = 0; col < 8; ++col) {
-      if(mapping[row][col] == repetitions) {
-         newRow = row;
-         newCol = col;
-         return;
-      }
-    }
+  //read state of the rotary switch
+  if(analogRead(A1)==1023){
+    Serial.println("Reset");
+    repetitions=0;
   }
-  state[newRow][newCol] = 1;
-  //print state matrix
-  /*for(int i=0; i<8; i++){
-    for(int j=0; j<8; j++){
-      Serial.print(state[i][j]);
-    }
-    Serial.println();
-  }*/
+  if(analogRead(A2)==1023){
+    target = 10;
+  } else if(analogRead(A3)==1023){
+    target = 27;
+  } else if(analogRead(A4)==1023){
+    target = 54;
+  } else if(analogRead(A5)==1023){
+    target = 108;
+  }
+  Serial.println(target);
+  if(target>0){
+    state[0][0]=1;
+  }
 }
-
+  
 void timerIsr() {
   //control LEDs
-  for(int i = 0; i<6; i++){
-    for(int j = 0; j<5; j++){
-      //delay(1000);
-      if(state[i][j] >= 0){ // LED is supposed to glow
+  for(int i = 0; i<5; i++){
+    for(int j = 0; j<6; j++){
+      if(state[i][j] > 0){ // LED is supposed to glow
         // get pin settings for sensor select pins 
-        int set5V = bin[i]; 
-        int setGround = bin[j];
+        int set5V = bin[j]; 
+        int setGround = bin[i];
         //write to bits
         r3 = bitRead(setGround,0); 
         r4 = bitRead(setGround,1); 
@@ -132,8 +124,7 @@ void timerIsr() {
         digitalWrite(7, r5);
         digitalWrite(8, r6);  
         digitalWrite(9, r7);
-        digitalWrite(10, r8);
-        //delay(1000);
+        digitalWrite(10,r8);
       }
     }
   }
