@@ -42,8 +42,8 @@ int mapping[5][6] = { \
 int state[5][6] = { \
     {1, 0, 0, 0, 0, 0},  \
     {0, 0, 0, 0, 0, 0}, \
-    {0, 0, 0, 0, 0, 0}, \
-    {0, 0, 0, 0, 0, 0}, \
+    {0, 0, 1, 0, 0, 0}, \
+    {0, 0, 0, 0, 0, 1}, \
     {0, 0, 0, 0, 0, 0} \
 };
 
@@ -69,20 +69,28 @@ void setup() {
   pinMode(8, OUTPUT);    // r0
   pinMode(9, OUTPUT);    // r1
   pinMode(10, OUTPUT);   // r2
+  //on/off pin for 5V-multiplexer
+  pinMode(12, OUTPUT);   
   
   Serial.begin(9600);
 }
 
 /**********************************************/
 void loop() {
-  
+  Serial.println("on");
+
 }
   
 void timerIsr() {
+  // switch multiplexer off
+  digitalWrite(12, 1); 
+  
   //control LEDs
   for(int i = 0; i<5; i++){
     for(int j = 0; j<6; j++){
       if(state[i][j] > 0){ // LED is supposed to glow
+        // switch multiplexer off
+        digitalWrite(12, 1);
         // get pin settings for sensor select pins 
         int set5V = bin[j]; 
         int setGround = bin[i];
@@ -100,7 +108,10 @@ void timerIsr() {
         digitalWrite(8, r6);  
         digitalWrite(9, r7);
         digitalWrite(10,r8);
+        // switch multiplexer on
+        digitalWrite(12, 0);
+        //delay(100);
       }
     }
-  }
+   }
 }
