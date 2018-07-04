@@ -32,7 +32,7 @@ bool bool_sensor2 = false;
 
 //maps the order of the LEDs being turned on to their position in the "matrix"
 int mapping[5][6] = { \
-    { 0, 24, 25, 13, 22, 27}, \
+    { 0, 24, 15, 13, 22, 27}, \
     {21, 10,  2,  7, 19, 16}, \
     {17,  5,  1,  4,  9, 23}, \
     {25, 12,  3,  6, 11, 29}, \
