@@ -6,7 +6,6 @@
 /**********************************************/
 //bits for multiplexer 1
 int r0 = 0;      
-
 //bits for multiplexer 2
 int r3 = 0;      
 int r4 = 0;       
@@ -24,10 +23,9 @@ int frequency = 200;
 int mode = 0; //timer for sensor change
 int sensorValue = 0;
 float voltage = 0;
-int start = 0;
-
 bool bool_sensor1 = false;
 bool bool_sensor2 = false;
+bool start = true;
 
 //count repetitions
 int repetitions = 0;
@@ -45,7 +43,7 @@ int mapping[5][6] = { \
 int state[5][6] = { \
     {0, 0, 0, 0, 0, 0},  \
     {0, 0, 0, 0, 0, 0}, \
-    {0, 0, 0, 0, 0, 0}, \
+    {0, 0, 1, 0, 0, 0}, \
     {0, 0, 0, 0, 0, 1}, \
     {0, 0, 0, 0, 0, 0} \
 };
@@ -100,6 +98,7 @@ void loop() {
   //read state of the rotary switch
   if(analogRead(A2)==1023){
     target = 10;
+    Serial.println("target 10");
   } else if(analogRead(A3)==1023){
     target = 27;
   } else if(analogRead(A4)==1023){
@@ -122,10 +121,7 @@ void loop() {
   if(target>0 && state[0][0]==1){
     state[2][2]=1;
     state[0][0]=0;
-  } else {
-    state[0][0]=1;
-    state[2][2]=0;
-  }
+  } 
   
   //right side goes first
   if(repetitions==0){
@@ -168,10 +164,8 @@ void loop() {
     //sensor value below threshold
     if(mode == 0){
       bool_sensor1 = false;
-      Serial.println(bool_sensor1);
     } else {
       bool_sensor2 = false;
-      Serial.println(bool_sensor2);
     }
   }
   // print voltage and counter:
@@ -228,7 +222,12 @@ void timerIsr() {
 }
 
 void countUp() {
-  ++repetitions;
+  if(start == true){
+    start = false;
+  } else {
+    ++repetitions;
+  }
+  
   Serial.print("repetitions: ");
   Serial.println(repetitions);
   int newRow = 0;
@@ -244,7 +243,8 @@ void countUp() {
     }
   }
   state[newRow][newCol]=1;
-  
+
+  //switch on/off the blue lights to signal side
   state[3][5]=repetitions % 2;
   state[4][4]=(repetitions+1) % 2;     
  }
