@@ -24,7 +24,7 @@ bool calib_sensor1 = false;
 bool calib_sensor2 = false;
 double dist = 0.3;
 
-int frequency = 200;
+int frequency = 100;
 int mode = 0; //timer for sensor change
 int sensorValue = 0;
 float voltage = 0;
@@ -120,7 +120,7 @@ void loop() {
     if(voltage < 4.6){
       threshold_sensor1 = voltage + dist;
     } else {
-      threshold_sensor1 = 5;
+      threshold_sensor1 = 4.9;
     }
     calib_sensor1 = true;
     Serial.print("threshold A0: ");
@@ -129,7 +129,7 @@ void loop() {
     if(voltage < 4.6){
       threshold_sensor2 = voltage + dist;
     } else {
-      threshold_sensor2 = 5;
+      threshold_sensor2 = 4.9;
     }
     calib_sensor2 = true;
     Serial.print("threshold A1: ");
@@ -156,8 +156,7 @@ void loop() {
         state[i][j]=0;
       }
     }
-    state[0][0]=1;
-    state[3][5]=1;    
+    state[0][0]=1; 
     //calibrate sensors on reset
     if(mode == 0){
       if(voltage < 4.6){
@@ -180,21 +179,19 @@ void loop() {
     }
   }
 
-    //switch from reset mode to start
+  //switch from reset mode to start
   if(target>0 && state[0][0]==1){
+    state[3][5]=1;   
     state[2][2]=1;
     state[0][0]=0;
   } 
   
-
-
   //interpret sensor values
   if(mode == 0){
     if(voltage >= threshold_sensor1){
       if(bool_sensor1 == false){
         if(bool_sensor1_m ==true){
           bool_sensor1 = true;
-          //bool_sensor1_m = false;
           if(bool_sensor2==true){
             //entering tadasana
             countUp();
@@ -292,6 +289,8 @@ void timerIsr() {
 }
 
 void countUp() {
+  Serial.println("countUp");
+  state[0][0]=1;
   if(start == true){
     start = false;
   } else {
@@ -313,7 +312,8 @@ void countUp() {
   
     //switch on/off the blue lights to signal side
     state[3][5]=repetitions % 2;
-    state[4][4]=(repetitions+1) % 2;    
+    state[4][4]=(repetitions+1) % 2; 
+    state[0][0]=0;   
     } 
  }
  
