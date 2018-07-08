@@ -24,7 +24,7 @@ bool calib_sensor1 = false;
 bool calib_sensor2 = false;
 double dist = 0.3;
 
-int frequency = 100;
+int frequency = 25;
 int mode = 0; //timer for sensor change
 int sensorValue = 0;
 float voltage = 0;
@@ -181,6 +181,8 @@ void loop() {
 
   //switch from reset mode to start
   if(target>0 && state[0][0]==1){
+    Serial.print("target: ");
+    Serial.println(target);
     state[3][5]=1;   
     state[2][2]=1;
     state[0][0]=0;
@@ -236,12 +238,12 @@ void loop() {
   
   
   // print voltage and counter:
-  if(mode == 0){
-    Serial.print("A0: ");
-  } else {
-    Serial.print("A1: ");
-  }
-  Serial.println(voltage);
+//  if(mode == 0){
+//    Serial.print("A0: ");
+//  } else {
+//    Serial.print("A1: ");
+//  }
+//  Serial.println(voltage);
   
 }
   
@@ -289,31 +291,28 @@ void timerIsr() {
 }
 
 void countUp() {
-  Serial.println("countUp");
+  //Serial.println("countUp");
   state[0][0]=1;
   if(start == true){
     start = false;
+    //Serial.println("start");
   } else {
     ++repetitions;
-    Serial.print("repetitions: ");
+    //Serial.print("repetitions: ");
     Serial.println(repetitions);
-    int newRow = 0;
-    int newCol = 0;
-    
     for(unsigned row = 0; row < 5; ++row) {
       for(unsigned col = 0; col < 6; ++col) {
-         if(mapping[row][col] == repetitions) {
-            newRow = row;
-            newCol = col;
+         if(mapping[row][col] <= repetitions*27/target) {
+            state[row][col]=1;
          }
       }
     }
-    state[newRow][newCol]=1;
   
     //switch on/off the blue lights to signal side
     state[3][5]=repetitions % 2;
     state[4][4]=(repetitions+1) % 2; 
-    state[0][0]=0;   
+    state[0][0]=0;  
+     
     } 
  }
  
